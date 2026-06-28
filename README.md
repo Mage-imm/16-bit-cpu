@@ -100,8 +100,8 @@ A custom **16-bit single-cycle RISC-style processor** designed and implemented i
 | Register | Description               |
 | -------- | ------------------------- |
 | R0       | Hardwired Zero            |
-| R1-R6    | General Purpose Registers |
-| R7       | Stack Pointer (SP)        |
+| R1-R7    | General Purpose Registers |
+
 
 ---
 
