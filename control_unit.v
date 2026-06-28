@@ -1,7 +1,8 @@
 module control_unit (
-    input  [15:0] adress_control,
-    input         zero,
+    input      [15:0] adress_control,
+    input             zero,
     output reg        regfile_write,
+    output reg        ret_en,
     output reg [2:0]  rs1_regfile,
     output reg [2:0]  rs2_regfile,
     output reg [2:0]  rd_regfile,
@@ -15,7 +16,11 @@ module control_unit (
     output reg        branch_en,
     output reg        write_data,
     output reg        read_data,
-    output reg        s1,s2,s3
+    output reg        s1,s2,s3,s4,s5,
+    output reg            push_en,
+    output reg            pop_en,
+    output reg            push_pop_sel
+    
 );
 
     always @(*) begin
@@ -24,7 +29,7 @@ module control_unit (
         jump_en       = 1'b0;
         branch_en     = 1'b0;
         write_data    = 1'b1;
-        read_data     = 1'b1;
+        read_data     = 1'b0;
         s1            = 1'b0;
         s2            = 1'b0;
         s3            = 1'b0;
@@ -36,6 +41,13 @@ module control_unit (
         alu_imm       = 8'b0;
         jump_pc       = 11'b0;
         branch_imm    = 11'b0;
+        push_en       = 1'b0;
+        pop_en        = 1'b0;
+        push_pop_sel = 1'b0;  
+        s4           = 1'b0; 
+        s5           = 1'b0;
+        ret_en       = 1'b0;
+
 
         case(adress_control[15:11])
             5'b00000: begin // ADD
@@ -88,6 +100,16 @@ module control_unit (
                 s3            = 1'b1;
                 s2            = 1'b0;
             end
+            5'b00110: begin // LI
+            rd_regfile    = adress_control[10:8];
+            regfile_write = 1'b1;
+            alu_imm       = adress_control[7:0];
+            rs1_regfile   = 3'b000;
+            alu_op        = 3'b000;
+            write_data    = 1'b1;
+            s3            = 1'b0;
+            s2            = 1'b0;
+            end
             5'b00101: begin // XOR
                 rs1_regfile   = adress_control[2:0];
                 rs2_regfile   = adress_control[5:3];
@@ -123,7 +145,7 @@ module control_unit (
                 regfile_write = 1'b1;
                 adr_imm       = adress_control[7:0];
                 write_data    = 1'b1;
-                read_data     = 1'b0;
+                read_data     = 1'b1;
                 s2            = 1'b1;
             end
             5'b10011: begin // STORE
@@ -131,9 +153,53 @@ module control_unit (
                 regfile_write = 1'b0;
                 adr_imm       = adress_control[7:0];
                 write_data    = 1'b0;
-                read_data     = 1'b1;
+                read_data     = 1'b0;
                 s1            = 1'b0;
             end
+            5'b10100:  begin // PUSH
+            push_en = 1'b1;
+            pop_en = 1'b0;
+            s4 = 1'b0;
+            write_data    = 1'b0;
+            read_data     = 1'b0;
+            rs2_regfile   = adress_control[10:8];
+            s1 = 1'b0;
+            push_pop_sel  = 1'b0;
+            end
+        
+             5'b10101:  begin // PULL
+            push_en = 1'b0;
+            pop_en = 1'b1;
+            s4 = 1'b0;
+            write_data    = 1'b1;
+            read_data     = 1'b1;
+            rd_regfile   = adress_control[10:8];
+            push_pop_sel  = 1'b1;
+            s2 = 1'b1;
+             end
+             5'b10110: begin// call
+             s1 = 1'b1;
+             s5 = 1'b0;
+             jump_en = 1'b1;
+             write_data = 1'b0;
+             read_data  = 1'b0;
+             s4 = 1'b0;
+             push_pop_sel  = 1'b0;
+             push_en = 1'b1;
+             pop_en = 1'b0;
+             jump_pc = adress_control[10:0];
+             ret_en = 1'b0;
+             end
+             5'b10111: begin // ret
+             ret_en = 1'b1;
+             jump_en = 1'b1;
+             write_data = 1'b1;
+             read_data  = 1'b1;
+             s4 = 1'b0;
+             push_pop_sel  = 1'b1;
+             push_en = 1'b0;
+             pop_en = 1'b1;
+             end
             5'b10111: begin // JMP
                 jump_en       = 1'b1;
                 jump_pc       = adress_control[10:0];
