@@ -1,6 +1,6 @@
 module control_unit (
     input      [15:0] adress_control,
-    input             zero,
+    
     output reg        regfile_write,
     output reg        ret_en,
     output reg [2:0]  rs1_regfile,
@@ -109,6 +109,7 @@ module control_unit (
             write_data    = 1'b1;
             s3            = 1'b0;
             s2            = 1'b0;
+            s4 = 1'b1;
             end
             5'b00101: begin // XOR
                 rs1_regfile   = adress_control[2:0];
@@ -147,14 +148,17 @@ module control_unit (
                 write_data    = 1'b1;
                 read_data     = 1'b1;
                 s2            = 1'b1;
+                s4 = 1'b1;
             end
             5'b10011: begin // STORE
-                rs1_regfile   = adress_control[10:8];
+                rs2_regfile   = adress_control[10:8];
                 regfile_write = 1'b0;
                 adr_imm       = adress_control[7:0];
                 write_data    = 1'b0;
                 read_data     = 1'b0;
                 s1            = 1'b0;
+                s5            = 1'b0;
+                s4 = 1'b1;
             end
             5'b10100:  begin // PUSH
             push_en = 1'b1;
@@ -192,7 +196,7 @@ module control_unit (
              end
              5'b10111: begin // ret
              ret_en = 1'b1;
-             jump_en = 1'b1;
+             jump_en = 1'b0;
              write_data = 1'b1;
              read_data  = 1'b1;
              s4 = 1'b0;
@@ -208,8 +212,8 @@ module control_unit (
                 rs1_regfile   = adress_control[10:8];
                 rs2_regfile   = 3'b000;
                 alu_op        = 3'b001;
-                branch_en     = zero;
-                branch_imm    = adress_control[10:0];
+                branch_en     = 1'b1;
+                branch_imm    = adress_control[7:0];
             end
             5'b11111: begin // HLT
                 halt          = 1'b1;
